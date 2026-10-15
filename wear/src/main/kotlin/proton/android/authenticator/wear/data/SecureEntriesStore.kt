@@ -26,9 +26,9 @@ internal class SecureEntriesStore(context: Context) {
         return try {
             decrypt(file.readBytes())
         } catch (_: GeneralSecurityException) {
-            // Key lost or data corrupted: drop it, the phone will send the entries again.
-            file.delete()
-            null
+            dropCorruptedFile()
+        } catch (_: RuntimeException) {
+            dropCorruptedFile()
         } catch (_: IOException) {
             null
         }
@@ -42,6 +42,12 @@ internal class SecureEntriesStore(context: Context) {
             file.delete()
             tempFile.renameTo(file)
         }
+    }
+
+    // Key lost or data truncated: drop it, the phone will send the entries again.
+    private fun dropCorruptedFile(): ByteArray? {
+        file.delete()
+        return null
     }
 
     private fun encrypt(plainBytes: ByteArray): ByteArray {

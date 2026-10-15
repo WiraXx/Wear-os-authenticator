@@ -19,8 +19,13 @@ class EntriesRepository internal constructor(context: Context) {
     fun onPayloadReceived(bytes: ByteArray) {
         val decoded = WearSyncCodec.decode(bytes) ?: return
 
-        store.write(bytes)
         mutablePayload.value = decoded
+
+        try {
+            store.write(bytes)
+        } catch (_: Exception) {
+            // Keystore or disk failure: keep serving the in-memory copy, the phone resends on next launch.
+        }
     }
 
 }

@@ -42,9 +42,10 @@ object TotpGenerator {
     }
 
     private fun totpCode(binary: Int, digits: Int): String {
+        val length = digits.coerceIn(1, 10)
         var modulus = 1L
-        repeat(digits.coerceIn(1, 10)) { modulus *= 10 }
-        return (binary % modulus).toString().padStart(digits, '0')
+        repeat(length) { modulus *= 10 }
+        return (binary % modulus).toString().padStart(length, '0')
     }
 
     private fun steamCode(binary: Int): String {

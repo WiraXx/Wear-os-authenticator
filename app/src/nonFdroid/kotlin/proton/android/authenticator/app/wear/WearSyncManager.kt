@@ -5,6 +5,7 @@ import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -100,7 +101,7 @@ internal class WearSyncManager @Inject constructor(
         .map(WearSyncCodec::encode)
         .distinctUntilChanged { old, new -> old.contentEquals(new) }
 
-    private fun observeWatches(): Flow<Set<Node>> = callbackFlow {
+    private fun observeWatches(): Flow<Set<Node>> = callbackFlow<Set<Node>> {
         val listener = CapabilityClient.OnCapabilityChangedListener { info -> trySend(info.nodes) }
 
         Wearable.getCapabilityClient(context)
@@ -116,6 +117,8 @@ internal class WearSyncManager @Inject constructor(
                 .await()
                 .nodes
                 .forEach { node -> send(node.id, payload) }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (error: Exception) {
             Timber.w(error, "Unable to look up Wear OS watches")
         }
@@ -131,6 +134,8 @@ internal class WearSyncManager @Inject constructor(
             Wearable.getMessageClient(context)
                 .sendMessage(nodeId, WearSyncProtocol.PATH_ENTRIES, payload)
                 .await()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (error: Exception) {
             Timber.w(error, "Unable to send entries to Wear OS node")
         }
