@@ -75,11 +75,11 @@ jobs:
       - name: Build phone + watch
         run: |
           chmod +x gradlew
-          ./gradlew --stacktrace \
+          ./gradlew --stacktrace --continue \
             -Pwear.applicationIdSuffix="$ID_SUFFIX" \
             :shared:wearsync:test \
-            ":app:assemble${TASK_FLAVOR}ProdDebug" \
-            :wear:assembleDebug
+            :wear:assembleDebug \
+            ":app:assemble${TASK_FLAVOR}ProdDebug"
 
       - uses: actions/upload-artifact@v4
         with:
