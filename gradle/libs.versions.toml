@@ -33,6 +33,7 @@ testParameterInjectorVersion = "1.22"
 lifecycleRuntimeVersion = "2.9.1"
 materialVersion = "1.8.2"
 playReviewVersion = "2.0.1"
+playServicesWearableVersion = "19.0.0"
 playVersion = "3.12.1"
 protobufPluginVersion = "0.9.4"
 protobufVersion = "4.31.1"
@@ -45,6 +46,7 @@ runnerVersion = "1.7.0"
 sentryVersion = "4.14.1"
 startupVersion = "1.2.0"
 timberVersion = "5.0.1"
+wearComposeVersion = "1.5.0"
 workVersion = "2.10.1"
 zxingVersion = "3.5.3"
 
@@ -139,6 +141,8 @@ hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hil
 hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hiltVersion" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jnaVersion" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesVersion" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesVersion" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesVersion" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockkVersion" }
 kotlinx-collections = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxCollectionsVersion" }
@@ -155,6 +159,9 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timberVersio
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxingVersion" }
 play-review = { module = "com.google.android.play:review", version.ref = "playReviewVersion" }
 play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "playReviewVersion" }
+play-services-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "playServicesWearableVersion" }
+wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wearComposeVersion" }
+wear-compose-material = { module = "androidx.wear.compose:compose-material", version.ref = "wearComposeVersion" }
 
 [bundles]
 android-application-implementation = [
@@ -218,6 +225,7 @@ android-application = { id = "com.android.application", version.ref = "agpVersio
 dependency-guard = { id = "com.dropbox.dependency-guard", version.ref = "dependencyGuardVersion" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hiltVersion" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlinVersion" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlinVersion" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlinVersion" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinVersion" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "kspVersion" }

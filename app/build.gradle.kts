@@ -120,12 +120,18 @@ android {
     sourceSets {
         getByName("dev") {
             kotlin.srcDir("src/nonFdroid/kotlin")
+            manifest.srcFile("src/nonFdroid/AndroidManifest.xml")
+            res.srcDir("src/nonFdroid/res")
         }
         getByName("alpha") {
             kotlin.srcDir("src/nonFdroid/kotlin")
+            manifest.srcFile("src/nonFdroid/AndroidManifest.xml")
+            res.srcDir("src/nonFdroid/res")
         }
         getByName("play") {
             kotlin.srcDir("src/nonFdroid/kotlin")
+            manifest.srcFile("src/nonFdroid/AndroidManifest.xml")
+            res.srcDir("src/nonFdroid/res")
         }
     }
 }
@@ -198,6 +204,21 @@ dependencies {
 
     addFdroidSpecialLib(
         default = libs.core.telemetry.data,
+        fdroid = null
+    )
+
+    addFdroidSpecialLib(
+        default = libs.play.services.wearable,
+        fdroid = null
+    )
+
+    addFdroidSpecialLib(
+        default = libs.kotlinx.coroutines.play.services,
+        fdroid = null
+    )
+
+    addFdroidSpecialLib(
+        default = projects.shared.wearsync,
         fdroid = null
     )
 

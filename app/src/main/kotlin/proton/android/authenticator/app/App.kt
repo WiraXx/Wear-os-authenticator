@@ -44,6 +44,7 @@ import proton.android.authenticator.business.shared.telemetry.AuthenticatorTelem
 import proton.android.authenticator.features.shared.usecases.applock.UpdateAppLockStateUseCase
 import proton.android.authenticator.initializers.LoggerInitializer
 import proton.android.authenticator.initializers.SentryInitializer
+import proton.android.authenticator.initializers.WearSyncInitializer
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -117,6 +118,7 @@ internal class App : Application(), Configuration.Provider, ImageLoaderFactory {
             initializeComponent(SessionExpiredWorkInitializer::class.java)
             initializeComponent(SyncPeriodicWorkInitializer::class.java)
             initializeComponent(SyncWorkInitializer::class.java)
+            initializeComponent(WearSyncInitializer::class.java)
         }
     }
 

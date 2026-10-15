@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Authenticator</string>
+    <string name="waiting_title">Waiting for your phone</string>
+    <string name="waiting_message">Open Proton Authenticator on your phone. Your accounts sync automatically.</string>
+    <string name="no_entries">No entries yet. Add some on your phone.</string>
+    <string name="sync">Sync</string>
+    <string name="syncing">Syncing…</string>
+    <string name="phone_unreachable">Phone not reachable</string>
+</resources>

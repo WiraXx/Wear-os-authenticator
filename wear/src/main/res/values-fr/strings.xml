@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="waiting_title">En attente du téléphone</string>
+    <string name="waiting_message">Ouvrez Proton Authenticator sur votre téléphone. Vos comptes se synchronisent automatiquement.</string>
+    <string name="no_entries">Aucune entrée. Ajoutez-en depuis votre téléphone.</string>
+    <string name="sync">Synchroniser</string>
+    <string name="syncing">Synchronisation…</string>
+    <string name="phone_unreachable">Téléphone injoignable</string>
+</resources>

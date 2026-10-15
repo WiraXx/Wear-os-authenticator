@@ -10,6 +10,19 @@ height="80">](https://play.google.com/store/apps/details?id=proton.android.authe
 
 If you want to build the app locally, please refer to the [BUILD.md](./docs/public/BUILD.md) file.
 
+## Wear OS
+
+The `:wear` module is a Wear OS companion app. Once installed on a watch paired with the phone, it automatically receives the phone's entries and account name through the Wearable Data Layer (no separate login), stores them encrypted with the Android Keystore and computes the codes offline.
+
+The [Build Android & Wear OS](.github/workflows/build.yml) GitHub Action builds both apps and publishes them as the `android-phone-apk` and `wear-os-apk` artifacts:
+
+```shell
+adb install android-phone-apk/*.apk                 # phone
+adb -s <watch-ip>:<port> install wear-os-apk/*.apk  # watch (adb over Wi-Fi)
+```
+
+The two apps must share the same application id and signing key: install both from the same run, or set the `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and (optionally) `ANDROID_KEY_PASSWORD` repository secrets to sign every build with your own key. The Wear OS sync is not available in the `fdroid` flavor (it needs Google Play Services). Locally: `./gradlew :app:assemblePlayProdDebug :wear:assembleDebug` (use `-Pwear.applicationIdSuffix=.alpha` with the `alpha` flavor).
+
 ## Develop
 
 If you want to contribute to the application, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file.
