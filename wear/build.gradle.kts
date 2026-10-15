@@ -10,7 +10,7 @@ plugins {
 // Default pairs with the `play` phone flavor; pass -Pwear.applicationIdSuffix=.alpha (or .dev)
 // to pair with the `alpha` (or `dev`) phone flavor.
 val phoneApplicationIdSuffix: String = providers.gradleProperty("wear.applicationIdSuffix").getOrElse("")
-val runNumber: Int = providers.environmentVariable("GITHUB_RUN_NUMBER").map(String::toInt).getOrElse(0)
+val runNumber: Int = providers.environmentVariable("GITHUB_RUN_NUMBER").map { it.toInt() }.getOrElse(0)
 
 android {
     namespace = "proton.android.authenticator.wear"
