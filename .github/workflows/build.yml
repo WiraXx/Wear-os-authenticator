@@ -92,3 +92,49 @@ jobs:
           name: wear-os-apk
           path: wear/build/outputs/apk/**/*.apk
           if-no-files-found: error
+
+  # Raw .apk files (no zip) on a rolling pre-release, installable straight from the phone's browser.
+  release:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    env:
+      FLAVOR: ${{ inputs.flavor || 'play' }}
+      GH_TOKEN: ${{ github.token }}
+      TAG: latest-build
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-phone-apk
+          path: dl/phone
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wear-os-apk
+          path: dl/wear
+
+      - name: Publish release
+        run: |
+          mkdir out
+          cp "$(find dl/phone -name '*.apk' | head -n 1)" "out/ProtonAuthenticator-phone-$FLAVOR-debug.apk"
+          cp "$(find dl/wear -name '*.apk' | head -n 1)" "out/ProtonAuthenticator-wear-debug.apk"
+          cat > notes.md <<NOTES
+          Build of ${GITHUB_SHA::7} (branch \`$GITHUB_REF_NAME\`, run #$GITHUB_RUN_NUMBER).
+
+          - \`ProtonAuthenticator-phone-$FLAVOR-debug.apk\`: install on the **phone**.
+          - \`ProtonAuthenticator-wear-debug.apk\`: install on the **watch** (adb over Wi-Fi), never on the phone.
+
+          Install both from the same release: they must share the same signing key to sync through the Wearable Data Layer.
+          NOTES
+          gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          gh release create "$TAG" out/*.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Latest build (run #$GITHUB_RUN_NUMBER)" \
+            --notes-file notes.md
