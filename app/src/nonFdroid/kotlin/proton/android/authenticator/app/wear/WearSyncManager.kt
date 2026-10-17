@@ -62,10 +62,12 @@ internal class WearSyncManager @Inject constructor(
         if (!isStarted.compareAndSet(false, true)) return
 
         scope.launch {
-            observePayloads().collect { payload ->
-                latestPayload.value = payload
-                pushToWatches(payload)
-            }
+            observePayloads()
+                .catch { error -> Timber.w(error, "Wear OS sync stopped") }
+                .collect { payload ->
+                    latestPayload.value = payload
+                    pushToWatches(payload)
+                }
         }
 
         scope.launch {
