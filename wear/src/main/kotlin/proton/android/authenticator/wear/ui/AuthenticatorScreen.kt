@@ -15,6 +15,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,7 +40,13 @@ import proton.android.authenticator.shared.wearsync.WearEntriesPayload
 import proton.android.authenticator.shared.wearsync.WearEntry
 import proton.android.authenticator.wear.R
 
-enum class SyncStatus { Idle, Syncing, PhoneUnreachable }
+sealed interface SyncStatus {
+    data object Idle : SyncStatus
+    data object Syncing : SyncStatus
+    data object NoConnectedDevice : SyncStatus
+    data object PhoneAppMissing : SyncStatus
+    data class Failed(val code: String) : SyncStatus
+}
 
 private const val EXPIRING_SOON_SECONDS = 5
 
@@ -73,9 +80,13 @@ fun AuthenticatorScreen(
                     }
                 }
 
+                if (syncStatus.isProblem) {
+                    item { SyncProblem(syncStatus) }
+                }
+
                 when {
-                    payload == null -> item { Message(R.string.waiting_title, R.string.waiting_message) }
-                    payload.entries.isEmpty() -> item { Message(R.string.no_entries) }
+                    payload == null -> item { Message(stringResource(R.string.waiting_title), stringResource(R.string.waiting_message)) }
+                    payload.entries.isEmpty() -> item { Message(stringResource(R.string.no_entries)) }
                     else -> items(payload.entries.sortedBy(WearEntry::position), key = WearEntry::id) { entry ->
                         EntryCard(entry = entry, epochSeconds = epochSeconds)
                     }
@@ -88,11 +99,7 @@ fun AuthenticatorScreen(
                         label = {
                             Text(
                                 text = stringResource(
-                                    when (syncStatus) {
-                                        SyncStatus.Idle -> R.string.sync
-                                        SyncStatus.Syncing -> R.string.syncing
-                                        SyncStatus.PhoneUnreachable -> R.string.phone_unreachable
-                                    }
+                                    if (syncStatus == SyncStatus.Syncing) R.string.syncing else R.string.sync
                                 )
                             )
                         }
@@ -103,17 +110,44 @@ fun AuthenticatorScreen(
     }
 }
 
+private val SyncStatus.isProblem: Boolean
+    get() = this !is SyncStatus.Idle && this !is SyncStatus.Syncing
+
 @Composable
-private fun Message(title: Int, message: Int? = null) {
+private fun SyncProblem(status: SyncStatus) {
+    val packageName = LocalContext.current.packageName
+
+    when (status) {
+        SyncStatus.NoConnectedDevice -> Message(
+            title = stringResource(R.string.no_connected_device_title),
+            message = stringResource(R.string.no_connected_device_message)
+        )
+
+        SyncStatus.PhoneAppMissing -> Message(
+            title = stringResource(R.string.phone_app_missing_title),
+            message = stringResource(R.string.phone_app_missing_message, packageName)
+        )
+
+        is SyncStatus.Failed -> Message(
+            title = stringResource(R.string.sync_failed_title),
+            message = status.code
+        )
+
+        else -> Unit
+    }
+}
+
+@Composable
+private fun Message(title: String, message: String? = null) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = stringResource(title),
+            text = title,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.title3
         )
         message?.let {
             Text(
-                text = stringResource(it),
+                text = it,
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.body2
             )

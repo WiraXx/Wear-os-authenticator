@@ -24,6 +24,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # Keep the same debug signing key from run to run, so a new build can update the installed apps
+      # (a fresh key every run forces an uninstall first). Superseded by the ANDROID_KEYSTORE_* secrets.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: debug-keystore-v1
+
       # The runner image already ships the Android SDK; make sure AGP may download missing parts.
       - name: Accept Android SDK licenses
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true

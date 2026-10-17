@@ -6,5 +6,9 @@
     <string name="no_entries">No entries yet. Add some on your phone.</string>
     <string name="sync">Sync</string>
     <string name="syncing">Syncing…</string>
-    <string name="phone_unreachable">Phone not reachable</string>
+    <string name="no_connected_device_title">Watch not connected</string>
+    <string name="no_connected_device_message">Check Bluetooth and the Wear OS pairing with your phone.</string>
+    <string name="phone_app_missing_title">App not found on phone</string>
+    <string name="phone_app_missing_message">Install the phone app from the same release (package %1$s).</string>
+    <string name="sync_failed_title">Sync error</string>
 </resources>

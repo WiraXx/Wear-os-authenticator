@@ -10,10 +10,11 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import proton.android.authenticator.wear.entriesRepository
 import proton.android.authenticator.wear.sync.PhoneSync
+import proton.android.authenticator.wear.sync.PhoneSyncResult
 
 class MainActivity : ComponentActivity() {
 
-    private val syncStatus = mutableStateOf(SyncStatus.Idle)
+    private val syncStatus = mutableStateOf<SyncStatus>(SyncStatus.Idle)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,10 +39,11 @@ class MainActivity : ComponentActivity() {
     private fun requestSync() {
         lifecycleScope.launch {
             syncStatus.value = SyncStatus.Syncing
-            syncStatus.value = if (PhoneSync.requestSync(applicationContext)) {
-                SyncStatus.Idle
-            } else {
-                SyncStatus.PhoneUnreachable
+            syncStatus.value = when (val result = PhoneSync.requestSync(applicationContext)) {
+                PhoneSyncResult.Requested -> SyncStatus.Idle
+                PhoneSyncResult.NoConnectedDevice -> SyncStatus.NoConnectedDevice
+                PhoneSyncResult.PhoneAppMissing -> SyncStatus.PhoneAppMissing
+                is PhoneSyncResult.Failed -> SyncStatus.Failed(result.code)
             }
         }
     }
