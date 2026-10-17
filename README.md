@@ -14,14 +14,17 @@ If you want to build the app locally, please refer to the [BUILD.md](./docs/publ
 
 The `:wear` module is a Wear OS companion app. Once installed on a watch paired with the phone, it automatically receives the phone's entries and account name through the Wearable Data Layer (no separate login), stores them encrypted with the Android Keystore and computes the codes offline.
 
-The [Build Android & Wear OS](.github/workflows/build.yml) GitHub Action builds both apps and publishes them as the `android-phone-apk` and `wear-os-apk` artifacts:
+The [Build Android & Wear OS](.github/workflows/build.yml) GitHub Action builds two phone/watch pairs and publishes the raw APKs on the `latest-build` pre-release (and as workflow artifacts):
+
+- `play`: application id `proton.android.authenticator` (same as the Play Store app, uninstall it first).
+- `alpha`: application id `proton.android.authenticator.alpha` (installs next to the Play Store app).
 
 ```shell
-adb install android-phone-apk/*.apk                 # phone
-adb -s <watch-ip>:<port> install wear-os-apk/*.apk  # watch (adb over Wi-Fi)
+adb install ProtonAuthenticator-phone-alpha-debug.apk                  # phone
+adb -s <watch-ip>:<port> install ProtonAuthenticator-wear-alpha-debug.apk  # watch (adb over Wi-Fi)
 ```
 
-The two apps must share the same application id and signing key: install both from the same run, or set the `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and (optionally) `ANDROID_KEY_PASSWORD` repository secrets to sign every build with your own key. The Wear OS sync is not available in the `fdroid` flavor (it needs Google Play Services). Locally: `./gradlew :app:assemblePlayProdDebug :wear:assembleDebug` (use `-Pwear.applicationIdSuffix=.alpha` with the `alpha` flavor).
+The two apps must share the same application id and signing key: install a matching pair from the same release, or set the `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and (optionally) `ANDROID_KEY_PASSWORD` repository secrets to sign every build with your own key. The Wear OS sync is not available in the `fdroid` flavor (it needs Google Play Services). Locally: `./gradlew :app:assemblePlayProdDebug :wear:assembleDebug` (use `-Pwear.applicationIdSuffix=.alpha` with the `alpha` flavor).
 
 ## Develop
 

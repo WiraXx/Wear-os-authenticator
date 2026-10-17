@@ -4,15 +4,6 @@ on:
   push:
   pull_request:
   workflow_dispatch:
-    inputs:
-      flavor:
-        description: Phone flavor (the watch app is built to pair with it)
-        type: choice
-        default: play
-        options:
-          - play
-          - alpha
-          - dev
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,8 +16,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    env:
-      FLAVOR: ${{ inputs.flavor || 'play' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,16 +29,6 @@ jobs:
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - uses: gradle/actions/setup-gradle@v4
-
-      # The phone and the watch must share applicationId + signing key to talk to each other
-      # through the Wearable Data Layer, so both flavors/suffixes are derived from one input.
-      - name: Resolve flavor
-        run: |
-          case "$FLAVOR" in
-            play)  echo "TASK_FLAVOR=Play"  >> "$GITHUB_ENV"; echo "ID_SUFFIX="       >> "$GITHUB_ENV" ;;
-            alpha) echo "TASK_FLAVOR=Alpha" >> "$GITHUB_ENV"; echo "ID_SUFFIX=.alpha" >> "$GITHUB_ENV" ;;
-            dev)   echo "TASK_FLAVOR=Dev"   >> "$GITHUB_ENV"; echo "ID_SUFFIX=.dev"   >> "$GITHUB_ENV" ;;
-          esac
 
       # Optional: with the ANDROID_KEYSTORE_* secrets both APKs are signed with your own stable key
       # (so later builds update the installed apps). Without them, the runner's debug key is used:
@@ -72,25 +51,40 @@ jobs:
             } >> ~/.gradle/gradle.properties
           fi
 
-      - name: Build phone + watch
+      # Two phone/watch pairs, each with its own applicationId (the Wearable Data Layer only links
+      # apps sharing id + signing key):
+      #  - play : proton.android.authenticator       (same id as the Play Store app, uninstall that one first)
+      #  - alpha: proton.android.authenticator.alpha (can live next to the Play Store app)
+      - name: Build play pair
         run: |
           chmod +x gradlew
           ./gradlew --stacktrace --continue \
-            -Pwear.applicationIdSuffix="$ID_SUFFIX" \
             :shared:wearsync:test \
             :wear:assembleDebug \
-            ":app:assemble${TASK_FLAVOR}ProdDebug"
+            :app:assemblePlayProdDebug
+          mkdir -p apks/phone apks/wear
+          cp "$(find app/build/outputs/apk/playProd -name '*.apk' | head -n 1)" apks/phone/ProtonAuthenticator-phone-play-debug.apk
+          cp "$(find wear/build/outputs/apk -name '*.apk' | head -n 1)" apks/wear/ProtonAuthenticator-wear-play-debug.apk
+
+      - name: Build alpha pair
+        run: |
+          ./gradlew --stacktrace --continue \
+            -Pwear.applicationIdSuffix=.alpha \
+            :wear:assembleDebug \
+            :app:assembleAlphaProdDebug
+          cp "$(find app/build/outputs/apk/alphaProd -name '*.apk' | head -n 1)" apks/phone/ProtonAuthenticator-phone-alpha-debug.apk
+          cp "$(find wear/build/outputs/apk -name '*.apk' | head -n 1)" apks/wear/ProtonAuthenticator-wear-alpha-debug.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: android-phone-apk
-          path: app/build/outputs/apk/**/*.apk
+          path: apks/phone/*.apk
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v4
         with:
           name: wear-os-apk
-          path: wear/build/outputs/apk/**/*.apk
+          path: apks/wear/*.apk
           if-no-files-found: error
 
   # Raw .apk files (no zip) on a rolling pre-release, installable straight from the phone's browser.
@@ -104,32 +98,28 @@ jobs:
       group: release
       cancel-in-progress: false
     env:
-      FLAVOR: ${{ inputs.flavor || 'play' }}
       GH_TOKEN: ${{ github.token }}
       TAG: latest-build
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: android-phone-apk
-          path: dl/phone
+          path: out
 
       - uses: actions/download-artifact@v4
         with:
           name: wear-os-apk
-          path: dl/wear
+          path: out
 
       - name: Publish release
         run: |
-          mkdir out
-          cp "$(find dl/phone -name '*.apk' | head -n 1)" "out/ProtonAuthenticator-phone-$FLAVOR-debug.apk"
-          cp "$(find dl/wear -name '*.apk' | head -n 1)" "out/ProtonAuthenticator-wear-debug.apk"
           cat > notes.md <<NOTES
           Build of ${GITHUB_SHA::7} (branch \`$GITHUB_REF_NAME\`, run #$GITHUB_RUN_NUMBER).
 
-          - \`ProtonAuthenticator-phone-$FLAVOR-debug.apk\`: install on the **phone**.
-          - \`ProtonAuthenticator-wear-debug.apk\`: install on the **watch** (adb over Wi-Fi), never on the phone.
+          Install a **phone** APK on the phone and the **wear** APK with the same name suffix on the watch (adb over Wi-Fi, never on the phone). Both must come from this release: they share the same signing key and application id, which the Wearable Data Layer requires.
 
-          Install both from the same release: they must share the same signing key to sync through the Wearable Data Layer.
+          - \`play\`: application id \`proton.android.authenticator\`, same as the Play Store app (uninstall it first).
+          - \`alpha\`: application id \`proton.android.authenticator.alpha\`, installs next to the Play Store app.
           NOTES
           gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
           gh release create "$TAG" out/*.apk \
@@ -145,6 +135,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [33, 34]
     steps:
       - uses: actions/checkout@v4
 
@@ -161,15 +155,15 @@ jobs:
 
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: ${{ matrix.api-level }}
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: bash scripts/smoke-test.sh "$(find dl/phone -name '*.apk' | head -n 1)" smoke-out
+          script: bash scripts/smoke-test.sh dl/phone/ProtonAuthenticator-phone-play-debug.apk smoke-out
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: smoke-test-logs
+          name: smoke-test-logs-api${{ matrix.api-level }}
           path: smoke-out
           if-no-files-found: warn
