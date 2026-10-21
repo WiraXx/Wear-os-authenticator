@@ -114,15 +114,26 @@ internal class WearSyncManager @Inject constructor(
 
     private suspend fun pushToWatches(payload: ByteArray) {
         try {
-            Wearable.getCapabilityClient(context)
-                .getCapability(WearSyncProtocol.WEAR_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
-                .await()
-                .nodes
-                .forEach { node -> send(node.id, payload) }
+            reachableWatches().forEach { node -> send(node.id, payload) }
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
             Timber.w(error, "Unable to look up Wear OS watches")
+        }
+    }
+
+    // Watches advertising the app; when none does (capabilities can be slow to propagate) every
+    // connected node: only the same app (package + signature) can receive the message anyway.
+    private suspend fun reachableWatches(): List<Node> {
+        val withApp = Wearable.getCapabilityClient(context)
+            .getCapability(WearSyncProtocol.WEAR_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
+            .await()
+            .nodes
+
+        return if (withApp.isNotEmpty()) {
+            withApp.toList()
+        } else {
+            Wearable.getNodeClient(context).connectedNodes.await()
         }
     }
 

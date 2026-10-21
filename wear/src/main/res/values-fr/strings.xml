@@ -8,6 +8,6 @@
     <string name="no_connected_device_title">Montre non connectée</string>
     <string name="no_connected_device_message">Vérifiez le Bluetooth et le jumelage Wear OS avec votre téléphone.</string>
     <string name="phone_app_missing_title">App introuvable sur le téléphone</string>
-    <string name="phone_app_missing_message">Installez l\'app téléphone de la même release (package %1$s).</string>
+    <string name="phone_app_missing_message">Installez l\'app téléphone de la même release (package %1$s). Connecté : %2$s.</string>
     <string name="sync_failed_title">Erreur de synchro</string>
 </resources>

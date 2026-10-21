@@ -44,7 +44,7 @@ sealed interface SyncStatus {
     data object Idle : SyncStatus
     data object Syncing : SyncStatus
     data object NoConnectedDevice : SyncStatus
-    data object PhoneAppMissing : SyncStatus
+    data class PhoneAppMissing(val devices: String) : SyncStatus
     data class Failed(val code: String) : SyncStatus
 }
 
@@ -123,9 +123,9 @@ private fun SyncProblem(status: SyncStatus) {
             message = stringResource(R.string.no_connected_device_message)
         )
 
-        SyncStatus.PhoneAppMissing -> Message(
+        is SyncStatus.PhoneAppMissing -> Message(
             title = stringResource(R.string.phone_app_missing_title),
-            message = stringResource(R.string.phone_app_missing_message, packageName)
+            message = stringResource(R.string.phone_app_missing_message, packageName, status.devices)
         )
 
         is SyncStatus.Failed -> Message(

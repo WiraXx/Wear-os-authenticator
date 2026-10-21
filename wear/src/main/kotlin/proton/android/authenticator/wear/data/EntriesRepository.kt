@@ -4,6 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import proton.android.authenticator.shared.wearsync.WearEntriesPayload
 import proton.android.authenticator.shared.wearsync.WearSyncCodec
 
@@ -16,10 +17,16 @@ class EntriesRepository internal constructor(context: Context) {
 
     val payload: StateFlow<WearEntriesPayload?> = mutablePayload.asStateFlow()
 
+    private val mutableReceivedCount = MutableStateFlow(0)
+
+    /** Increments on every payload received, even an identical one, to detect a phone answer. */
+    val receivedCount: StateFlow<Int> = mutableReceivedCount.asStateFlow()
+
     fun onPayloadReceived(bytes: ByteArray) {
         val decoded = WearSyncCodec.decode(bytes) ?: return
 
         mutablePayload.value = decoded
+        mutableReceivedCount.update { count -> count + 1 }
 
         try {
             store.write(bytes)
